@@ -1,0 +1,14 @@
+{
+  "name": "deadlineos",
+  "version": "1.0.0",
+  "description": "DeadlineOS - Smart Student Deadline Manager",
+  "scripts": {
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "build": "cd frontend && npm run build",
+    "start": "cd backend && node server.js",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm start",
+    "test": "cd backend && npm test",
+    "render:build": "npm run install:all && npm run build"
+  }
+}
