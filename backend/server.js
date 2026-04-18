@@ -1,4 +1,12 @@
 require('dotenv').config();
+console.log('--- DeadlineOS Startup ---');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('PORT:', process.env.PORT);
+console.log('MONGODB_URI set:', !!process.env.MONGODB_URI);
+console.log('GOOGLE_CLIENT_ID set:', !!process.env.GOOGLE_CLIENT_ID);
+console.log('JWT_SECRET set:', !!process.env.JWT_SECRET);
+console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
+
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
