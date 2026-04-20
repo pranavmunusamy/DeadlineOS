@@ -1,4 +1,16 @@
 require('dotenv').config();
+
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION:', err.message);
+  console.error(err.stack);
+  setTimeout(() => process.exit(1), 2000);
+});
+
+process.on('unhandledRejection', (err) => {
+  console.error('UNHANDLED REJECTION:', err.message || err);
+  setTimeout(() => process.exit(1), 2000);
+});
+
 console.log('--- DeadlineOS Startup ---');
 console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('PORT:', process.env.PORT);

@@ -12,11 +12,18 @@ const connectDB = async () => {
   }
 
   try {
-    const conn = await mongoose.connect(uri);
+    const conn = await mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 10000,
+    });
     console.log(`MongoDB connected: ${conn.connection.host}`);
   } catch (error) {
-    console.error(`MongoDB connection error: ${error.message}`);
-    process.exit(1);
+    console.error('=== MONGODB ERROR START ===');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Full error:', JSON.stringify(error, null, 2));
+    console.error('=== MONGODB ERROR END ===');
+    // Delay exit so logs flush
+    setTimeout(() => process.exit(1), 2000);
   }
 };
 
