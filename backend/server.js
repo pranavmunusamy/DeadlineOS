@@ -29,6 +29,9 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const emailRoutes = require('./routes/emailRoutes');
+const roomRoutes = require('./routes/roomRoutes');
+const sessionRoutes = require('./routes/sessionRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -70,6 +73,9 @@ app.use(express.json({ limit: '1mb' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/emails', emailRoutes);
+app.use('/api/rooms', roomRoutes);
+app.use('/api/sessions', sessionRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

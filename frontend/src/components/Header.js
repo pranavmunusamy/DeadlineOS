@@ -4,8 +4,11 @@ const tabs = [
   { id: 'dashboard', label: 'Dashboard', key: 'D' },
   { id: 'calendar', label: 'Calendar', key: 'C' },
   { id: 'timetable', label: 'Timetable', key: 'T' },
+  { id: 'rooms', label: 'Rooms', key: 'B' },
+  { id: 'study-groups', label: 'Study Groups', key: 'G' },
   { id: 'courses', label: 'Courses', key: 'R' },
   { id: 'analytics', label: 'Analytics', key: 'A' },
+  { id: 'room-analytics', label: 'Room Stats', key: 'S' },
   { id: 'office-hours', label: 'Office Hours', key: 'O' },
 ];
 

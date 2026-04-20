@@ -5,6 +5,9 @@ import TaskCard from './TaskCard';
 import AddTaskModal from './AddTaskModal';
 import CalendarView from './CalendarView';
 import TimetableView from './TimetableView';
+import RoomBooking from './RoomBooking';
+import StudySessions from './StudySessions';
+import RoomAnalytics from './RoomAnalytics';
 import CourseList from './CourseList';
 import AnalyticsView from './AnalyticsView';
 import OfficeHours from './OfficeHours';
@@ -211,8 +214,11 @@ const Dashboard = () => {
 
         {activeTab === 'calendar' && <CalendarView tasks={allTasks} />}
         {activeTab === 'timetable' && <TimetableView />}
+        {activeTab === 'rooms' && <RoomBooking />}
+        {activeTab === 'study-groups' && <StudySessions />}
         {activeTab === 'courses' && <CourseList tasks={allTasks} />}
         {activeTab === 'analytics' && <AnalyticsView stats={stats} />}
+        {activeTab === 'room-analytics' && <RoomAnalytics />}
         {activeTab === 'office-hours' && <OfficeHours />}
       </main>
 
