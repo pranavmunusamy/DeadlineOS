@@ -2,7 +2,6 @@ const { fetchEmails } = require('../services/gmailService');
 const { extractDeadlinesFromEmails } = require('../services/deadlineExtractor');
 const { calculatePriority } = require('../services/priorityEngine');
 const Task = require('../models/Task');
-const User = require('../models/User');
 
 const syncEmails = async (req, res) => {
   try {
@@ -12,19 +11,20 @@ const syncEmails = async (req, res) => {
       return res.status(400).json({ error: 'Gmail not connected. Please re-authenticate.' });
     }
 
-    const maxResults = Math.min(parseInt(req.query.count) || 50, 100);
+    const maxResults = Math.min(parseInt(req.query.count) || 100, 200);
+    const daysBack = Math.min(parseInt(req.query.days) || 30, 90);
 
-    // Fetch emails from Gmail
-    const emails = await fetchEmails(user.googleTokens, maxResults);
+    // Fetch emails with improved query filters and lookback window
+    const emails = await fetchEmails(user.googleTokens, maxResults, { daysBack });
 
     if (emails.length === 0) {
-      return res.json({ message: 'No emails found', tasksCreated: 0 });
+      return res.json({ message: 'No emails found matching deadline patterns', tasksCreated: 0 });
     }
 
-    // Extract deadlines
+    // Extract deadlines (v2: includes relative dates, time, confidence scoring)
     const extracted = extractDeadlinesFromEmails(emails);
 
-    // Filter out duplicates (by messageId)
+    // Filter out duplicates by messageId
     const existingMessageIds = await Task.find({
       userId: user._id,
       'sourceEmail.messageId': { $in: extracted.map((t) => t.sourceEmail.messageId) },
@@ -35,8 +35,12 @@ const syncEmails = async (req, res) => {
       (t) => !existingSet.has(t.sourceEmail.messageId)
     );
 
+    // Also filter out tasks whose deadlines already passed
+    const now = new Date();
+    const relevantTasks = newTasks.filter((t) => t.deadline >= now);
+
     // Create tasks with priority
-    const tasksToInsert = newTasks.map((task) => {
+    const tasksToInsert = relevantTasks.map((task) => {
       const { priority, priorityScore } = calculatePriority(task.deadline);
       return {
         userId: user._id,
@@ -60,8 +64,11 @@ const syncEmails = async (req, res) => {
     await user.save();
 
     res.json({
-      message: `Synced ${emails.length} emails, extracted ${created.length} new tasks`,
+      message: `Synced ${emails.length} emails, extracted ${created.length} new deadline${created.length !== 1 ? 's' : ''}`,
       emailsFetched: emails.length,
+      candidatesFound: extracted.length,
+      duplicatesSkipped: extracted.length - newTasks.length,
+      pastDeadlinesSkipped: newTasks.length - relevantTasks.length,
       tasksCreated: created.length,
       tasks: created,
     });
