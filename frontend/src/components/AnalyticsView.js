@@ -1,21 +1,24 @@
-import { WORKLOAD_DATA, BADGES } from '../utils/mockData';
+import { useState, useEffect } from 'react';
+import api from '../services/api';
 
 const BarChart = ({ data }) => {
-  const max = Math.max(...data.map((d) => d.assignments + d.quizzes + d.projects + d.papers));
+  if (!data || data.length === 0) return <div className="glass rounded-xl p-5"><p className="text-xs text-[var(--text-muted)]">No workload data yet. Add tasks to see trends.</p></div>;
+
+  const max = Math.max(...data.map((d) => d.total || (d.assignments + d.quizzes + d.projects + d.papers)), 1);
   return (
     <div className="glass rounded-xl p-5 animate-fade-up stagger-1">
       <h3 className="font-display font-bold text-[var(--text-primary)] mb-1">Workload</h3>
       <p className="text-[10px] font-mono text-[var(--text-muted)] mb-4">Weekly distribution by type</p>
       <div className="flex items-end gap-2 h-32">
         {data.map((d, i) => {
-          const t = d.assignments + d.quizzes + d.projects + d.papers;
+          const t = d.total || (d.assignments + d.quizzes + d.projects + d.papers);
           const pct = max > 0 ? (t / max) * 100 : 0;
           return (
             <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
               <span className="text-[9px] font-mono text-[var(--text-muted)] opacity-0 group-hover:opacity-100 transition-opacity">{t}</span>
               <div className="w-full rounded-t overflow-hidden transition-all" style={{ height: `${Math.max(pct, 4)}%` }}>
                 <div className="h-full flex flex-col">
-                  <div className="flex-1 bg-[var(--accent-blue)] opacity-90" style={{ flex: d.assignments }} />
+                  <div className="flex-1 bg-[var(--accent-blue)] opacity-90" style={{ flex: d.assignments || 0.001 }} />
                   <div className="flex-1 bg-[var(--accent-purple)] opacity-80" style={{ flex: d.quizzes || 0.001 }} />
                   <div className="flex-1 bg-[var(--accent-green)] opacity-80" style={{ flex: d.projects || 0.001 }} />
                   <div className="flex-1 bg-[var(--accent-amber)] opacity-80" style={{ flex: d.papers || 0.001 }} />
@@ -35,9 +38,9 @@ const BarChart = ({ data }) => {
   );
 };
 
-const StressGauge = ({ stats }) => {
-  const level = Math.min(100, (stats?.highPriority || 0) * 20 + (stats?.pending || 0) * 5);
-  const label = level > 70 ? 'High' : level > 40 ? 'Moderate' : 'Low';
+const StressGauge = ({ stress }) => {
+  const level = stress?.score || 0;
+  const label = stress?.label || 'Low';
   const color = level > 70 ? 'var(--accent-red)' : level > 40 ? 'var(--accent-amber)' : 'var(--accent-green)';
 
   return (
@@ -56,46 +59,62 @@ const StressGauge = ({ stats }) => {
         </div>
         <div>
           <p className="font-display font-bold" style={{ color }}>{label}</p>
-          <p className="text-[10px] text-[var(--text-muted)] mt-1">{stats?.highPriority || 0} urgent · {stats?.pending || 0} pending</p>
+          <p className="text-[10px] text-[var(--text-muted)] mt-1">
+            {stress?.overdue || 0} overdue · {stress?.highPriority || 0} urgent · {stress?.next3Days || 0} due soon
+          </p>
         </div>
       </div>
     </div>
   );
 };
 
-const Achievements = () => (
-  <div className="glass rounded-xl p-5 animate-fade-up stagger-3">
-    <h3 className="font-display font-bold text-[var(--text-primary)] mb-3">Achievements</h3>
-    <div className="grid grid-cols-3 gap-2">
-      {BADGES.map((b) => (
-        <div key={b.id} className={`text-center p-3 rounded-xl transition-all ${b.earned ? 'bg-[var(--accent-amber-dim)] border border-[rgba(245,166,35,0.2)]' : 'bg-[var(--bg-tertiary)] opacity-40'}`}>
-          <span className="text-xl">{b.icon}</span>
-          <p className="text-[10px] font-semibold text-[var(--text-primary)] mt-1">{b.name}</p>
-          {!b.earned && b.progress && (
-            <div className="progress-bar mt-1.5"><div className="progress-bar-fill bg-[var(--accent-blue)]" style={{ width: `${b.progress}%` }} /></div>
-          )}
-        </div>
-      ))}
-    </div>
-  </div>
-);
+const Achievements = ({ achievements }) => {
+  if (!achievements || achievements.length === 0) return null;
 
-const GradeEstimator = () => {
-  const data = [
-    { code: 'CS301', pct: 85, grade: 'A-' },
-    { code: 'ENG201', pct: 72, grade: 'B+' },
-    { code: 'MATH205', pct: 91, grade: 'A' },
-    { code: 'PHYS101', pct: 58, grade: 'B-' },
-  ];
+  return (
+    <div className="glass rounded-xl p-5 animate-fade-up stagger-3">
+      <h3 className="font-display font-bold text-[var(--text-primary)] mb-3">Achievements</h3>
+      <div className="grid grid-cols-3 gap-2">
+        {achievements.map((b) => {
+          const pct = b.target > 0 ? Math.round((b.current / b.target) * 100) : 0;
+          return (
+            <div key={b.id} className={`text-center p-3 rounded-xl transition-all ${b.earned ? 'bg-[var(--accent-amber-dim)] border border-[rgba(245,166,35,0.2)]' : 'bg-[var(--bg-tertiary)] opacity-60'}`}>
+              <span className="text-xl">{b.icon}</span>
+              <p className="text-[10px] font-semibold text-[var(--text-primary)] mt-1">{b.name}</p>
+              <p className="text-[8px] text-[var(--text-muted)] mt-0.5">{b.desc}</p>
+              {!b.earned && (
+                <div className="progress-bar mt-1.5"><div className="progress-bar-fill bg-[var(--accent-blue)]" style={{ width: `${pct}%` }} /></div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+const GradeEstimator = ({ coursePerformance }) => {
+  if (!coursePerformance || coursePerformance.length === 0) {
+    return (
+      <div className="glass rounded-xl p-5 animate-fade-up stagger-4">
+        <h3 className="font-display font-bold text-[var(--text-primary)] mb-1">Grade Forecast</h3>
+        <p className="text-[10px] font-mono text-[var(--text-muted)]">Add courses and link tasks to see grade estimates.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="glass rounded-xl p-5 animate-fade-up stagger-4">
       <h3 className="font-display font-bold text-[var(--text-primary)] mb-1">Grade Forecast</h3>
-      <p className="text-[10px] font-mono text-[var(--text-muted)] mb-4">Based on deadline completion</p>
+      <p className="text-[10px] font-mono text-[var(--text-muted)] mb-4">Based on task completion rates</p>
       <div className="space-y-3">
-        {data.map((c) => (
+        {coursePerformance.map((c) => (
           <div key={c.code} className="flex items-center gap-3">
-            <span className="text-xs font-mono text-[var(--text-secondary)] w-14">{c.code}</span>
-            <div className="flex-1 progress-bar"><div className="progress-bar-fill bg-[var(--accent-blue)]" style={{ width: `${c.pct}%` }} /></div>
+            <span className="text-xs font-mono text-[var(--text-secondary)] w-16 truncate" title={c.name}>{c.code}</span>
+            <div className="flex-1 progress-bar">
+              <div className="progress-bar-fill transition-all duration-700" style={{ width: `${c.pct}%`, background: c.color || 'var(--accent-blue)' }} />
+            </div>
+            <span className="text-[10px] font-mono text-[var(--text-muted)] w-10 text-right">{c.done}/{c.total}</span>
             <span className="text-xs font-display font-bold text-[var(--text-primary)] w-6 text-right">{c.grade}</span>
           </div>
         ))}
@@ -104,16 +123,88 @@ const GradeEstimator = () => {
   );
 };
 
-const AnalyticsView = ({ stats }) => (
-  <div className="space-y-4">
-    <h2 className="font-display text-lg font-bold text-[var(--text-primary)]">Analytics</h2>
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <BarChart data={WORKLOAD_DATA} />
-      <StressGauge stats={stats} />
-      <Achievements />
-      <GradeEstimator />
+const DailyDensity = ({ density }) => {
+  if (!density || density.length === 0) return null;
+  const max = Math.max(...density.map((d) => d.count), 1);
+
+  return (
+    <div className="glass rounded-xl p-5 animate-fade-up stagger-5">
+      <h3 className="font-display font-bold text-[var(--text-primary)] mb-1">Upcoming Density</h3>
+      <p className="text-[10px] font-mono text-[var(--text-muted)] mb-4">Tasks due per day (next 14 days)</p>
+      <div className="flex items-end gap-1 h-20">
+        {density.map((d, i) => {
+          const pct = max > 0 ? (d.count / max) * 100 : 0;
+          const isToday = i === 0;
+          return (
+            <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
+              <span className="text-[8px] font-mono text-[var(--text-muted)] opacity-0 group-hover:opacity-100 transition-opacity">{d.count}</span>
+              <div className={`w-full rounded-t transition-all ${isToday ? 'bg-[var(--accent-blue)]' : d.count > 2 ? 'bg-[var(--accent-red)] opacity-70' : 'bg-[var(--accent-green)] opacity-50'}`}
+                style={{ height: `${Math.max(pct, 6)}%` }} />
+              <span className="text-[7px] font-mono text-[var(--text-muted)] truncate w-full text-center">{d.label?.split(' ')[0]}</span>
+            </div>
+          );
+        })}
+      </div>
     </div>
-  </div>
-);
+  );
+};
+
+const SummaryCards = ({ summary }) => {
+  if (!summary) return null;
+
+  const cards = [
+    { label: 'Total Tasks', value: summary.totalTasks, color: 'var(--accent-blue)' },
+    { label: 'Completed', value: summary.completed, color: 'var(--accent-green)' },
+    { label: 'Pending', value: summary.pending, color: 'var(--accent-amber)' },
+    { label: 'Overdue', value: summary.overdue, color: 'var(--accent-red)' },
+    { label: 'Completion', value: `${summary.completionRate}%`, color: 'var(--accent-purple)' },
+    { label: 'Courses', value: summary.activeCourses, color: 'var(--accent-blue)' },
+  ];
+
+  return (
+    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 animate-fade-up">
+      {cards.map((c) => (
+        <div key={c.label} className="glass rounded-xl p-3 text-center">
+          <p className="font-display text-lg font-bold" style={{ color: c.color }}>{c.value}</p>
+          <p className="text-[9px] font-mono text-[var(--text-muted)]">{c.label}</p>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const AnalyticsView = () => {
+  const [analytics, setAnalytics] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const { data } = await api.get('/student-analytics');
+        setAnalytics(data);
+      } catch { /* ok */ }
+      setLoading(false);
+    };
+    fetchAnalytics();
+  }, []);
+
+  if (loading) return <div className="flex items-center justify-center py-20"><p className="text-sm font-mono text-[var(--text-muted)]">Loading analytics...</p></div>;
+
+  if (!analytics) return <div className="glass rounded-xl p-8 text-center"><p className="text-sm text-[var(--text-muted)]">Could not load analytics. Try again later.</p></div>;
+
+  return (
+    <div className="space-y-4">
+      <h2 className="font-display text-lg font-bold text-[var(--text-primary)]">Analytics</h2>
+      <SummaryCards summary={analytics.summary} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <BarChart data={analytics.workload} />
+        <StressGauge stress={analytics.stress} />
+        <Achievements achievements={analytics.achievements} />
+        <GradeEstimator coursePerformance={analytics.coursePerformance} />
+        <DailyDensity density={analytics.dailyDensity} />
+      </div>
+    </div>
+  );
+};
 
 export default AnalyticsView;

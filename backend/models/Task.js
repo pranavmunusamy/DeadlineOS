@@ -6,6 +6,11 @@ const taskSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
+  courseId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Course',
+    default: null,
+  },
   title: {
     type: String,
     required: true,

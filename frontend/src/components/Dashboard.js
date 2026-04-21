@@ -201,11 +201,13 @@ const Dashboard = () => {
                   </div>
                 </div>
 
-                {/* Streak */}
+                {/* Completion Rate */}
                 <div className="glass rounded-xl p-4 text-center animate-fade-up stagger-6" style={{ background: 'var(--accent-amber-dim)', border: '1px solid rgba(245,166,35,0.15)' }}>
                   <span className="text-2xl block">&#9889;</span>
-                  <p className="font-display text-xl font-bold text-[var(--accent-amber)] mt-1">7 Days</p>
-                  <p className="text-[10px] font-mono text-[var(--text-muted)]">Current streak</p>
+                  <p className="font-display text-xl font-bold text-[var(--accent-amber)] mt-1">
+                    {stats?.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}%
+                  </p>
+                  <p className="text-[10px] font-mono text-[var(--text-muted)]">Completion rate</p>
                 </div>
               </div>
             </div>
@@ -217,7 +219,7 @@ const Dashboard = () => {
         {activeTab === 'rooms' && <RoomBooking />}
         {activeTab === 'study-groups' && <StudySessions />}
         {activeTab === 'courses' && <CourseList tasks={allTasks} />}
-        {activeTab === 'analytics' && <AnalyticsView stats={stats} />}
+        {activeTab === 'analytics' && <AnalyticsView />}
         {activeTab === 'room-analytics' && <RoomAnalytics />}
         {activeTab === 'office-hours' && <OfficeHours />}
       </main>

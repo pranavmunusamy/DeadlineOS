@@ -32,6 +32,11 @@ const emailRoutes = require('./routes/emailRoutes');
 const roomRoutes = require('./routes/roomRoutes');
 const sessionRoutes = require('./routes/sessionRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
+const timetableRoutes = require('./routes/timetableRoutes');
+const courseRoutes = require('./routes/courseRoutes');
+const officeHourRoutes = require('./routes/officeHourRoutes');
+const suggestionRoutes = require('./routes/suggestionRoutes');
+const studentAnalyticsRoutes = require('./routes/studentAnalyticsRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -76,6 +81,11 @@ app.use('/api/emails', emailRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/timetable', timetableRoutes);
+app.use('/api/courses', courseRoutes);
+app.use('/api/office-hours', officeHourRoutes);
+app.use('/api/suggestions', suggestionRoutes);
+app.use('/api/student-analytics', studentAnalyticsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
